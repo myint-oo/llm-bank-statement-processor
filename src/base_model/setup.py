@@ -44,6 +44,14 @@ def setup_model():
             token=hf_token if hf_token else None
         )
         
+        # Fix generation config issues before saving
+        if hasattr(model_obj, 'generation_config') and model_obj.generation_config is not None:
+            gen_config = model_obj.generation_config
+            # If do_sample is False, remove temperature to avoid conflicts
+            if hasattr(gen_config, 'do_sample') and not gen_config.do_sample:
+                if hasattr(gen_config, 'temperature'):
+                    gen_config.temperature = None
+        
         # Save model and tokenizer
         tokenizer.save_pretrained(model_path)
         model_obj.save_pretrained(model_path)
