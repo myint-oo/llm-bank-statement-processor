@@ -81,6 +81,9 @@ class BankStatementProcessor:
         result = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
         print(f"Processing completed in {time.time() - start_time:.2f} seconds")
 
+        print("Raw output: ")
+        print(result)
+
         # find json in all the text
         json_start = result.find("{")
         json_end = result.rfind("}") + 1
