@@ -1,0 +1,9 @@
+transformers
+torch
+python-dotenv
+PyPDF2
+pdf2image
+pytesseract
+huggingface_hub
+accelerate
+safetensors

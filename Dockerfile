@@ -1,0 +1,15 @@
+FROM pytorch/pytorch:2.7.1-cuda11.8-cudnn9-runtime
+
+WORKDIR /src
+
+RUN apt-get update && apt-get install -y \
+    git \
+    libgl1 \
+    poppler-utils \
+    tesseract-ocr \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+COPY . .
