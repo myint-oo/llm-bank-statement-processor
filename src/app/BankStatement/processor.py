@@ -156,7 +156,7 @@ if __name__ == "__main__":
     
     try:
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        pdf_path = os.path.join(script_dir, "resources", "May_Bank_2024-07.pdf")
+        pdf_path = os.path.join(script_dir, "resources", "MAY BANK JAN 2024.pdf")
         bank_statements_text = processor.extract_pdf_text_ocr(pdf_path)
 
         result = processor.process(bank_statements_text)
