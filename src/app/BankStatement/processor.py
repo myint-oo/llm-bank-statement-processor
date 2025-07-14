@@ -170,6 +170,7 @@ if __name__ == "__main__":
         bank_statements_text = processor.extract_pdf_text_ocr(pdf_path)
 
         result = processor.process(bank_statements_text)
+        print('Result: ')
         print(result)
     except Exception as e:
         print(f"Error: {str(e)}")
