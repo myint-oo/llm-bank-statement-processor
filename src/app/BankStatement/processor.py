@@ -69,12 +69,10 @@ class BankStatementProcessor:
             outputs = self.model.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
-                max_new_tokens=1024,  # Reduced from 2048
-                do_sample=True,  # Enable sampling to reduce repetition
-                temperature=0.1,  # Very low but not 0 to avoid repetitive patterns
-                top_p=0.9,  # Nucleus sampling for better quality
-                repetition_penalty=1.3,  # Increased to reduce repetition
-                no_repeat_ngram_size=3,  # Prevent repeating 3-grams
+                max_new_tokens=800,  # Further reduced to avoid repetition
+                do_sample=False,  # Back to deterministic for more consistent JSON
+                temperature=0.0,  # Completely deterministic
+                repetition_penalty=1.2,  # Moderate repetition penalty
                 early_stopping=True,  # Stop when EOS token is generated
                 eos_token_id=self.tokenizer.eos_token_id,
                 pad_token_id=self.tokenizer.pad_token_id,
@@ -86,38 +84,23 @@ class BankStatementProcessor:
         result = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
         print(f"Processing completed in {time.time() - start_time:.2f} seconds")
 
-        print("Raw output: ")
-        print(result)
-
-        # Find the first complete JSON block in the output
-        json_start = result.find("{")
-        if json_start == -1:
-            raise ValueError("No valid JSON found in the output")
-        
-        # Find the matching closing brace for the first JSON
-        brace_count = 0
-        json_end = -1
-        for i in range(json_start, len(result)):
-            if result[i] == '{':
-                brace_count += 1
-            elif result[i] == '}':
-                brace_count -= 1
-                if brace_count == 0:
-                    json_end = i + 1
-                    break
-        
-        if json_end == -1:
-            raise ValueError("No complete JSON found in the output")
-
-        return result[json_start:json_end]
+        return result
 
     def prepare_prompt(self, pdf_text):
-        return """
-You are an expert ai processor/programmar trained to process raw text extracted from a bank statement PDF to JSON.  Your task is to extract clean, accurate, and consistent structured JSON containing account details and transactions.
-Strict rules to follow:
-1. JSON structure must follow this format:
+        return """You are an expert AI system that extracts structured data from bank statements and outputs ONLY valid JSON.
+
+Your task: Extract data from the bank statement text and return ONLY a single, valid JSON object.
+
+CRITICAL RULES:
+1. Output ONLY valid JSON - no explanations, no comments, no extra text
+2. Use proper JSON syntax - double quotes for strings, no trailing commas
+3. Use null for missing values, not "null" as a string
+4. Numbers must be numeric, not strings
+5. Dates must be YYYY-MM-DD format
+
+JSON STRUCTURE (follow exactly):
 {
-  "bank_name": "extract bank name",
+  "bank_name": "string",
   "statement_period": {
     "start_date": "YYYY-MM-DD",
     "end_date": "YYYY-MM-DD"
@@ -125,36 +108,34 @@ Strict rules to follow:
   "accounts": [
     {
       "account_number": "string",
-      "account_name": "string",
+      "account_name": "string", 
       "currency": "string",
       "opening_balance": number,
-      "closing_balance": number or null,
+      "closing_balance": number,
       "transactions": [
         {
           "date": "YYYY-MM-DD",
           "description": "string",
-          "debit": number (if debit) OR
-          "credit": number (if credit),
-          "balance": number or null,
-          "note": "string or null"
+          "debit": number,
+          "balance": number,
+          "note": "string"
         }
       ]
     }
   ]
 }
-2. Only use one of "debit" or "credit" per transaction. Always use positive numbers.
-3. Dates must be formatted as YYYY-MM-DD. If the year is missing, infer from the context of the statement (e.g., January 2024).
-4. The "note" field must contain additional reference or invoice info found directly under the transaction line (e.g., masked account numbers, invoice numbers). If none exists, use null.
-5. If "balance" is shown in the statement for that transaction, include it. If not, use null.
-6. All transactions should belong to the nearest account section above them.
-7. Do not include headers, footers, legal disclaimers, or irrelevant text. Focus only on account sections and transaction details.
-8. If any required data is missing or unreadable, return null for that field.
-9. Do not guess, create, or infer beyond what is in the document. Just extract.
-Remember: extract ALL DATA, follow the structure exactly, and never include extra explanation or formatting.
+
+EXTRACTION RULES:
+- Use either "debit" OR "credit" per transaction, never both
+- All amounts as positive numbers
+- Extract account numbers, names, balances exactly as shown
+- Include ALL transactions found
+- If data is unclear/missing, use null
+
 INPUT TEXT:
 """ + pdf_text + """
-STRICT VALID JSON OUTPUT:
-"""
+
+OUTPUT (valid JSON only):"""
 
     def extract_pdf_text_ocr(self, pdf_path):
         if not OCR_AVAILABLE:
