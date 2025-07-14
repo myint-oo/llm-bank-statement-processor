@@ -84,38 +84,52 @@ class BankStatementProcessor:
 
     def prepare_prompt(self, pdf_text):
         return """<|im_start|>user
-Extract bank statement data and return ONLY valid JSON.
+Extract complete bank statement data.
+Return ONLY valid JSON in the exact structure below. All required fields must be present.
 
-MANDATORY TRANSACTION FIELDS:
-- debit: amount if debit transaction, null if credit
-- credit: amount if credit transaction, null if debit  
-- balance: ALWAYS required, never null
+MANDATORY RULES:
+  - Each transaction must include:
+  - date (in YYYY-MM-DD format)
+  - description
+  - debit (number if money was withdrawn, null if not)
+  - credit (number if money was deposited, null if not)
+  - balance (MUST always be present and never null)
+  - note (optional, or null)
+  - Only one of debit or credit can be non-null.
 
-EXAMPLE:
-Input: "SGD Current Account Account Number 04171089735 Opening Balance 24,837.69 01 Jan Payment to IYBB Loan 11,012.01 13,825.68"
+- Each account must include:
+  - account_number
+  - account_name
+  - currency
+  - opening_balance
+  - closing_balance
+  - list of all associated transactions
 
-Output: {"bank_name": "mybank", "statement_period": {"start_date": "2024-01-01", "end_date": "2024-01-31"}, "accounts": [{"account_number": "04171089735", "account_name": "SGD Current Account", "currency": "SGD", "opening_balance": 24837.69, "closing_balance": 13825.68, "transactions": [{"date": "2024-01-01", "description": "Payment to IYBB Loan", "debit": 11012.01, "credit": null, "balance": 13825.68, "note": null}]}]}
+- Statement metadata must include:
+  - bank_name
+  - statement_period with start_date and end_date (format: YYYY-MM-DD)
 
-JSON STRUCTURE (follow exactly):
+- Normalize any dates like "01 Jan" to full "YYYY-MM-DD" format using the correct year and month from the document.
+
+JSON OUTPUT STRUCTURE:
 {
   "bank_name": "string",
   "statement_period": {
-    "start_date": "YYYY-MM-DD", 
+    "start_date": "YYYY-MM-DD",
     "end_date": "YYYY-MM-DD"
   },
   "accounts": [
     {
       "account_number": "string",
       "account_name": "string",
-      "currency": "string", 
+      "currency": "string",
       "opening_balance": number,
-      "closing_balance": number,
       "transactions": [
         {
           "date": "YYYY-MM-DD",
           "description": "string",
           "debit": number,
-          "credit": number, 
+          "credit": number,
           "balance": number,
           "note": "string"
         }
@@ -123,6 +137,8 @@ JSON STRUCTURE (follow exactly):
     }
   ]
 }
+
+The JSON must be syntactically correct and complete.
 
 Extract from this bank statement:
 """ + pdf_text + """
