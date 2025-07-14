@@ -69,11 +69,7 @@ class BankStatementProcessor:
             outputs = self.model.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
-                max_new_tokens=1200,  # Further reduced to avoid repetition
-                do_sample=False,  # Back to deterministic for more consistent JSON
-                temperature=0.0,  # Completely deterministic
-                repetition_penalty=1.2,  # Moderate repetition penalty
-                early_stopping=True,  # Stop when EOS token is generated
+                max_new_tokens=1024,
                 eos_token_id=self.tokenizer.eos_token_id,
                 pad_token_id=self.tokenizer.pad_token_id,
             )
@@ -87,55 +83,17 @@ class BankStatementProcessor:
         return result
 
     def prepare_prompt(self, pdf_text):
-        return """You are an expert AI system that extracts structured data from bank statements and outputs ONLY valid JSON.
+        return """<|im_start|>user
+Extract bank statement data and return ONLY valid JSON.
 
-Your task: Extract data from the bank statement text and return ONLY a single, valid JSON object.
+EXAMPLE:
+Input: "SGD Current Account Account Number 12345 Opening Balance 1000.00 01 Jan Payment 500.00 500.00"
+Output: {"bank_name": "Bank", "accounts": [{"account_number": "12345", "account_name": "SGD Current Account", "currency": "SGD", "opening_balance": 1000.00, "closing_balance": 500.00, "transactions": [{"date": "2024-01-01", "description": "Payment", "debit": 500.00, "balance": 500.00}]}]}
 
-CRITICAL RULES:
-1. Output ONLY valid JSON - no explanations, no comments, no extra text
-2. Use proper JSON syntax - double quotes for strings, no trailing commas
-3. Use null for missing values, not "null" as a string
-4. Numbers must be numeric, not strings
-5. Dates must be YYYY-MM-DD format
-
-JSON STRUCTURE (follow exactly):
-{
-  "bank_name": "string",
-  "statement_period": {
-    "start_date": "YYYY-MM-DD",
-    "end_date": "YYYY-MM-DD"
-  },
-  "accounts": [
-    {
-      "account_number": "string",
-      "account_name": "string", 
-      "currency": "string",
-      "opening_balance": number,
-      "closing_balance": number,
-      "transactions": [
-        {
-          "date": "YYYY-MM-DD",
-          "description": "string",
-          "debit": number,
-          "balance": number,
-          "note": "string"
-        }
-      ]
-    }
-  ]
-}
-
-EXTRACTION RULES:
-- Use either "debit" OR "credit" per transaction, never both
-- All amounts as positive numbers
-- Extract account numbers, names, balances exactly as shown
-- Include ALL transactions found
-- If data is unclear/missing, use null
-
-INPUT TEXT:
-""" + pdf_text + """
-
-OUTPUT (valid JSON only):"""
+Extract from this bank statement:
+""" + pdf_text + """<|im_end|>
+<|im_start|>assistant
+{"""
 
     def extract_pdf_text_ocr(self, pdf_path):
         if not OCR_AVAILABLE:
