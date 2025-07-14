@@ -69,11 +69,13 @@ class BankStatementProcessor:
             outputs = self.model.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
-                max_new_tokens=2048,
-                do_sample=False,
-                temperature=0.0,
-                top_p=1.0,
-                repetition_penalty=1.1,
+                max_new_tokens=1024,  # Reduced from 2048
+                do_sample=True,  # Enable sampling to reduce repetition
+                temperature=0.1,  # Very low but not 0 to avoid repetitive patterns
+                top_p=0.9,  # Nucleus sampling for better quality
+                repetition_penalty=1.3,  # Increased to reduce repetition
+                no_repeat_ngram_size=3,  # Prevent repeating 3-grams
+                early_stopping=True,  # Stop when EOS token is generated
                 eos_token_id=self.tokenizer.eos_token_id,
                 pad_token_id=self.tokenizer.pad_token_id,
             )
@@ -87,11 +89,25 @@ class BankStatementProcessor:
         print("Raw output: ")
         print(result)
 
-        # find json in all the text
+        # Find the first complete JSON block in the output
         json_start = result.find("{")
-        json_end = result.rfind("}") + 1
-        if json_start == -1 or json_end == -1:
+        if json_start == -1:
             raise ValueError("No valid JSON found in the output")
+        
+        # Find the matching closing brace for the first JSON
+        brace_count = 0
+        json_end = -1
+        for i in range(json_start, len(result)):
+            if result[i] == '{':
+                brace_count += 1
+            elif result[i] == '}':
+                brace_count -= 1
+                if brace_count == 0:
+                    json_end = i + 1
+                    break
+        
+        if json_end == -1:
+            raise ValueError("No complete JSON found in the output")
 
         return result[json_start:json_end]
 
