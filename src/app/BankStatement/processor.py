@@ -69,10 +69,13 @@ class BankStatementProcessor:
             outputs = self.model.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
-                max_new_tokens=1024,
-                pad_token_id=self.tokenizer.pad_token_id,
+                max_new_tokens=2048,
+                do_sample=False,
+                temperature=0.0,
+                top_p=1.0,
+                repetition_penalty=1.1,
                 eos_token_id=self.tokenizer.eos_token_id,
-                repetition_penalty=1.1
+                pad_token_id=self.tokenizer.pad_token_id,
             )
 
         # Only decode the new tokens (excluding the input prompt)
@@ -131,12 +134,9 @@ Strict rules to follow:
 7. Do not include headers, footers, legal disclaimers, or irrelevant text. Focus only on account sections and transaction details.
 8. If any required data is missing or unreadable, return null for that field.
 9. Do not guess, create, or infer beyond what is in the document. Just extract.
-
 Remember: extract ALL DATA, follow the structure exactly, and never include extra explanation or formatting.
-
 INPUT TEXT:
 """ + pdf_text + """
-
 STRICT VALID JSON OUTPUT:
 """
 
