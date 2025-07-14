@@ -69,7 +69,7 @@ class BankStatementProcessor:
             outputs = self.model.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
-                max_new_tokens=800,  # Further reduced to avoid repetition
+                max_new_tokens=1200,  # Further reduced to avoid repetition
                 do_sample=False,  # Back to deterministic for more consistent JSON
                 temperature=0.0,  # Completely deterministic
                 repetition_penalty=1.2,  # Moderate repetition penalty
