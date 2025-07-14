@@ -53,8 +53,8 @@ class BankStatementProcessor:
         return self.device
 
     def process(self, pdf_text):
-        if not pdf_text or not pdf_text.strip():
-            raise ValueError("Input text cannot be empty")
+        # if not pdf_text or not pdf_text.strip():
+        #     raise ValueError("Input text cannot be empty")
             
         start_time = time.time()
         
@@ -114,11 +114,11 @@ if __name__ == "__main__":
     processor = BankStatementProcessor()
     
     try:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        pdf_path = os.path.join(script_dir, "resources", "May_Bank_2024-07.pdf")
-        bank_statements_text = processor.extract_pdf_text_ocr(pdf_path)
+        # script_dir = os.path.dirname(os.path.abspath(__file__))
+        # pdf_path = os.path.join(script_dir, "resources", "May_Bank_2024-07.pdf")
+        # bank_statements_text = processor.extract_pdf_text_ocr(pdf_path)
 
-        result = processor.process(bank_statements_text)
+        result = processor.process("")
         print('Result: ')
         print(result)
     except Exception as e:
