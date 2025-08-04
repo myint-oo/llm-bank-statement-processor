@@ -5,14 +5,6 @@ import time
 from dotenv import load_dotenv
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# OCR imports
-try:
-    from pdf2image import convert_from_path
-    import pytesseract
-    OCR_AVAILABLE = True
-except ImportError:
-    OCR_AVAILABLE = False
-
 class BankStatementProcessor:
     def __init__(self):
         load_dotenv()
@@ -53,11 +45,6 @@ class BankStatementProcessor:
         return self.device
 
     def process(self, pdf_text):
-        # if not pdf_text or not pdf_text.strip():
-        #     raise ValueError("Input text cannot be empty")
-            
-        start_time = time.time()
-        
         prompt = self.prepare_prompt(pdf_text)
         inputs = self.tokenizer(prompt, return_tensors="pt", padding=True, truncation=True, max_length=2048)
         # Move inputs to same device as model
@@ -78,7 +65,6 @@ class BankStatementProcessor:
         input_length = input_ids.shape[1]
         generated_tokens = outputs[0][input_length:]
         result = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
-        print(f"Processing completed in {time.time() - start_time:.2f} seconds")
 
         return result
 
@@ -146,37 +132,3 @@ Extract from this bank statement:
 <|im_start|>assistant
 """
 
-    def extract_pdf_text_ocr(self, pdf_path):
-        if not OCR_AVAILABLE:
-            raise RuntimeError("OCR libraries not available. Install with: pip install pytesseract pdf2image")
-        
-        try:
-            print(f"Using OCR to extract text from: {pdf_path}")
-            
-            # Convert PDF to images
-            images = convert_from_path(pdf_path)
-            
-            text = ""
-            for i, image in enumerate(images):
-                print(f"Processing page {i+1} with OCR...")
-                page_text = pytesseract.image_to_string(image)
-                print(f"Page {i+1} extracted {len(page_text)} characters")
-                text += page_text + "\n"
-            
-            return text.strip()
-        except Exception as e:
-            raise RuntimeError(f"Failed to extract text using OCR: {str(e)}")
-
-if __name__ == "__main__":
-    processor = BankStatementProcessor()
-    
-    try:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        pdf_path = os.path.join(script_dir, "resources", "MAY BANK JAN 2024.pdf")
-        bank_statements_text = processor.extract_pdf_text_ocr(pdf_path)
-
-        result = processor.process(bank_statements_text)
-        print('Result: ')
-        print(result)
-    except Exception as e:
-        print(f"Error: {str(e)}")

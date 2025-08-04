@@ -7,3 +7,9 @@ pytesseract
 huggingface_hub
 accelerate
 safetensors
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+python-jose[cryptography]
+passlib[bcrypt]
