@@ -21,7 +21,6 @@ class HealthController:
         return {
             "status": health_status["status"],
             "model_loaded": health_status["model_loaded"],
-            "pdf_service_available": health_status["pdf_service_available"],
             "version": settings.API_VERSION,
             "timestamp": datetime.now()
         }

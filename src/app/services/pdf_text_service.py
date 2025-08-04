@@ -299,7 +299,7 @@ class PDFTextService:
         if self.ocr_available:
             try:
                 import pytesseract
-                info["tesseract_version"] = pytesseract.get_tesseract_version()
+                info["tesseract_version"] = str(pytesseract.get_tesseract_version())
             except:
                 info["tesseract_version"] = "unknown"
         

@@ -170,7 +170,7 @@ class OCRService:
             try:
                 # Try to get tesseract version
                 import pytesseract
-                info["tesseract_version"] = pytesseract.get_tesseract_version()
+                info["tesseract_version"] = str(pytesseract.get_tesseract_version())
             except:
                 info["tesseract_version"] = "unknown"
         else:
