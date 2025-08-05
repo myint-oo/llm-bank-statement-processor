@@ -72,13 +72,6 @@ class BankStatementService:
             
             processing_time = time.time() - start_time
 
-            return {
-                "success": True,
-                "message": f"Bank statement processed successfully in {processing_time:.2f} seconds",
-                "data": result,
-                "error": None
-            }
-            
             try:
                 parsed_result = json.loads(result)
                 parsed_result["processed_at"] = time.time()
@@ -105,7 +98,7 @@ class BankStatementService:
                     "success": False,
                     "message": "AI model returned invalid JSON",
                     "error": "INVALID_JSON_OUTPUT",
-                    "data": None
+                    "data": result  # Return raw result for debugging
                 }
                 
         except Exception as e:
@@ -151,7 +144,7 @@ class BankStatementService:
             
             result = self.process_text(extracted_text, customer_id)
             
-            if result["success"] and result["data"]:
+            if result["success"] and result["data"] and isinstance(result["data"], dict):
                 result["data"]["extraction_method"] = extraction_method
             
             return result
