@@ -67,13 +67,24 @@ class BankStatementService:
         try:
             start_time = time.time()
             
-            print(f"🔄 Processing bank statement for customer: {customer_id or 'unknown'}")
             result = self.processor.process(text_content)
             
             processing_time = time.time() - start_time
 
             try:
-                parsed_result = json.loads(result)
+                # Extract JSON from the AI model output
+                json_content = self._extract_json_from_text(result)
+                if not json_content:
+                    print(f"❌ No valid JSON found in AI model output")
+                    print(f"Raw output preview: {result[:500]}...")
+                    return {
+                        "success": False,
+                        "message": "AI model output does not contain valid JSON",
+                        "error": "NO_JSON_FOUND",
+                        "data": result  # Return raw result for debugging
+                    }
+                
+                parsed_result = json.loads(json_content)
                 parsed_result["processed_at"] = time.time()
                 parsed_result["processing_time_seconds"] = round(processing_time, 2)
                 
@@ -82,7 +93,7 @@ class BankStatementService:
                         "success": False,
                         "message": "AI model returned invalid data structure",
                         "error": "INVALID_AI_OUTPUT",
-                        "data": None
+                        "data": parsed_result
                     }
                 
                 return {
@@ -93,12 +104,17 @@ class BankStatementService:
                 }
                 
             except json.JSONDecodeError as e:
-                print(f"❌ Failed to parse AI model output as JSON: {e}")
+                print(f"❌ Failed to parse extracted JSON: {e}")
+                print(f"Extracted content preview: {json_content[:500]}...")
                 return {
                     "success": False,
-                    "message": "AI model returned invalid JSON",
-                    "error": "INVALID_JSON_OUTPUT",
-                    "data": result  # Return raw result for debugging
+                    "message": "AI model returned invalid JSON format",
+                    "error": "INVALID_JSON_FORMAT",
+                    "data": {
+                        "raw_output": result,
+                        "extracted_content": json_content,
+                        "parse_error": str(e)
+                    }
                 }
                 
         except Exception as e:
@@ -174,6 +190,36 @@ class BankStatementService:
             "pdf_service_status": "available" if pdf_service_ready else "not_available"
         }
     
+    def _extract_json_from_text(self, text: str) -> str:
+        """
+        Extract JSON content from AI model output by finding the JSON object between { and }
+        """
+        text = text.strip()
+        
+        # Find the first '{' to start the JSON
+        start_idx = text.find('{')
+        if start_idx == -1:
+            return ""
+        
+        # Find the matching closing brace by counting braces
+        brace_count = 0
+        end_idx = -1
+        
+        for i in range(start_idx, len(text)):
+            if text[i] == '{':
+                brace_count += 1
+            elif text[i] == '}':
+                brace_count -= 1
+                if brace_count == 0:
+                    end_idx = i
+                    break
+        
+        if end_idx == -1:
+            return ""
+        
+        json_content = text[start_idx:end_idx + 1]
+        return json_content.strip()
+
     def _validate_result_structure(self, result: Dict[str, Any]) -> bool:
         """
         Validate that the AI model returned the expected data structure
