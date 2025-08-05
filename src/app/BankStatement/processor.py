@@ -124,7 +124,7 @@ JSON OUTPUT STRUCTURE:
   ]
 }
 
-The JSON must be syntactically correct and complete.
+IMPORTANT: PLEASE MAKE SURE The JSON must be syntactically correct and complete.
 
 Extract from this bank statement:
 """ + pdf_text + """

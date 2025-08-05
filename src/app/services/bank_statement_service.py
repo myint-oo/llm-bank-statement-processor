@@ -71,6 +71,13 @@ class BankStatementService:
             result = self.processor.process(text_content)
             
             processing_time = time.time() - start_time
+
+            return {
+                "success": True,
+                "message": f"Bank statement processed successfully in {processing_time:.2f} seconds",
+                "data": result,
+                "error": None
+            }
             
             try:
                 parsed_result = json.loads(result)
