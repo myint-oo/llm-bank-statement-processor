@@ -243,14 +243,20 @@ class PDFTextService:
             
             # Convert PDF to images
             images = convert_from_path(pdf_path)
+            print(f"📄 PDF converted to {len(images)} image(s)")
             
             text = ""
             for i, image in enumerate(images):
+                print(f"📄 Processing page {i+1}/{len(images)} with OCR...")
                 page_text = pytesseract.image_to_string(image)
                 if page_text:
                     text += page_text + "\n"
+                    print(f"✅ Page {i+1}: extracted {len(page_text)} characters")
+                else:
+                    print(f"⚠️  Page {i+1}: no text extracted")
             
             extracted_text = text.strip()
+            print(f"🎉 Total OCR extraction: {len(extracted_text)} characters")
             
             if extracted_text:
                 return {
