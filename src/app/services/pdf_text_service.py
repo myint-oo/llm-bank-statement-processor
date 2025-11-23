@@ -240,8 +240,11 @@ class PDFTextService:
         """
         try:
             print(f"🔍 Using OCR to extract text from: {filename}")
+            print(f"📁 PDF path: {pdf_path}")
+            print(f"📏 PDF file size: {os.path.getsize(pdf_path)} bytes")
             
             # Convert PDF to images
+            print(f"🔄 Converting PDF to images...")
             images = convert_from_path(pdf_path)
             print(f"📄 PDF converted to {len(images)} image(s)")
             
@@ -276,6 +279,9 @@ class PDFTextService:
                 }
                 
         except Exception as e:
+            print(f"❌ OCR extraction failed: {str(e)}")
+            import traceback
+            print(f"❌ Full traceback:\n{traceback.format_exc()}")
             return {
                 "success": False,
                 "message": f"OCR extraction failed for {filename}",
