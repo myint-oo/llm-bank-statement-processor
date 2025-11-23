@@ -46,7 +46,7 @@ class BankStatementProcessor:
 
     def process(self, pdf_text):
         prompt = self.prepare_prompt(pdf_text)
-        inputs = self.tokenizer(prompt, return_tensors="pt", padding=True, truncation=True, max_length=2048)
+        inputs = self.tokenizer(prompt, return_tensors="pt", padding=True, truncation=True, max_length=8192)
         # Move inputs to same device as model
         input_ids = inputs['input_ids'].to(self.device)
         attention_mask = inputs['attention_mask'].to(self.device)
@@ -56,7 +56,7 @@ class BankStatementProcessor:
             outputs = self.model.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
-                max_new_tokens=2048,
+                max_new_tokens=8192,
                 eos_token_id=self.tokenizer.eos_token_id,
                 pad_token_id=self.tokenizer.pad_token_id,
             )

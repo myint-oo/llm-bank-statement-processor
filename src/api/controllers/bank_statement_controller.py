@@ -89,7 +89,8 @@ class BankStatementController:
             result = bank_statement_service.process_file(
                 file_content=file_content,
                 filename=file.filename,
-                customer_id=customer_id
+                customer_id=customer_id,
+                force_ocr=True
             )
             
             return result

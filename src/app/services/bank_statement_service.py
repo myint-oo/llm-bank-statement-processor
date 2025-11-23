@@ -70,13 +70,16 @@ class BankStatementService:
             result = self.processor.process(text_content)
             
             processing_time = time.time() - start_time
+            
+            # Print full AI output
+            print(f"🤖 Full AI Model Output:\n{result}")
+            print(f"{'='*80}")
 
             try:
                 # Extract JSON from the AI model output
                 json_content = self._extract_json_from_text(result)
                 if not json_content:
                     print(f"❌ No valid JSON found in AI model output")
-                    print(f"Raw output preview: {result[:500]}...")
                     return {
                         "success": False,
                         "message": "AI model output does not contain valid JSON",
@@ -105,7 +108,6 @@ class BankStatementService:
                 
             except json.JSONDecodeError as e:
                 print(f"❌ Failed to parse extracted JSON: {e}")
-                print(f"Extracted content preview: {json_content[:500]}...")
                 return {
                     "success": False,
                     "message": "AI model returned invalid JSON format",
@@ -193,7 +195,13 @@ class BankStatementService:
     def _extract_json_from_text(self, text: str) -> str:
         """
         Extract JSON content from AI model output by finding the JSON object between { and }
+        Handles <think> tags from Qwen models
         """
+        text = text.strip()
+        
+        # Remove <think>...</think> blocks (Qwen reasoning output)
+        import re
+        text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
         text = text.strip()
         
         # Find the first '{' to start the JSON
