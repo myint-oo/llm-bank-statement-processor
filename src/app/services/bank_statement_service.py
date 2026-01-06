@@ -130,7 +130,7 @@ class BankStatementService:
     
     def process_file(self, file_content: bytes, filename: str, customer_id: Optional[str] = None, force_ocr: bool = False) -> Dict[str, Any]:
         """
-        Process a PDF file and return structured data
+        Process a PDF or image file and return structured data
         """
         if not self.processor:
             return {
@@ -143,14 +143,22 @@ class BankStatementService:
         if not pdf_text_service.is_service_available():
             return {
                 "success": False,
-                "message": "PDF text extraction service not available",
-                "error": "PDF_SERVICE_NOT_AVAILABLE",
+                "message": "Text extraction service not available",
+                "error": "TEXT_SERVICE_NOT_AVAILABLE",
                 "data": None
             }
         
         try:
-            print(f"🔄 Extracting text from PDF: {filename}")
-            extraction_result = pdf_text_service.extract_text_from_pdf_bytes(file_content, filename, force_ocr)
+            # Determine file type from extension
+            file_ext = filename.lower().split('.')[-1] if '.' in filename else ''
+            is_image = file_ext in ['png', 'jpg', 'jpeg', 'tiff', 'tif', 'bmp', 'webp']
+            
+            if is_image:
+                print(f"🔄 Extracting text from image: {filename}")
+                extraction_result = pdf_text_service.extract_text_from_image_bytes(file_content, filename)
+            else:
+                print(f"🔄 Extracting text from PDF: {filename}")
+                extraction_result = pdf_text_service.extract_text_from_pdf_bytes(file_content, filename, force_ocr)
             
             if not extraction_result["success"]:
                 return extraction_result

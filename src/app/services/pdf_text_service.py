@@ -18,6 +18,7 @@ except ImportError:
 try:
     from pdf2image import convert_from_path
     import pytesseract
+    from PIL import Image
     OCR_AVAILABLE = True
 except ImportError:
     OCR_AVAILABLE = False
@@ -167,6 +168,109 @@ class PDFTextService:
                 "error": str(e),
                 "data": None,
                 "method_used": None
+            }
+    
+    def extract_text_from_image_bytes(self, file_content: bytes, filename: str) -> Dict[str, Any]:
+        """
+        Extract text from image file bytes using OCR
+        
+        Args:
+            file_content: Image file content as bytes
+            filename: Original filename for logging
+            
+        Returns:
+            Dict with success, message, data (extracted text), error, and method_used fields
+        """
+        if not self.ocr_available:
+            return {
+                "success": False,
+                "message": "OCR libraries not available for image processing",
+                "error": "OCR_NOT_AVAILABLE",
+                "data": None,
+                "method_used": None
+            }
+        
+        temp_file_path = None
+        try:
+            # Get file extension from filename
+            file_ext = filename.lower().split('.')[-1] if '.' in filename else 'png'
+            
+            # Save the uploaded image temporarily
+            with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{file_ext}') as temp_file:
+                temp_file.write(file_content)
+                temp_file_path = temp_file.name
+            
+            # Extract text using OCR
+            return self._extract_text_from_image_file(temp_file_path, filename)
+            
+        except Exception as e:
+            print(f"❌ Error extracting text from image: {str(e)}")
+            return {
+                "success": False,
+                "message": f"Failed to extract text from {filename}",
+                "error": str(e),
+                "data": None,
+                "method_used": None
+            }
+        finally:
+            # Clean up temporary file
+            if temp_file_path and os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+    
+    def _extract_text_from_image_file(self, image_path: str, filename: str) -> Dict[str, Any]:
+        """
+        Extract text from image file using OCR
+        
+        Args:
+            image_path: Path to the image file
+            filename: Filename for logging
+            
+        Returns:
+            Dict with extraction result
+        """
+        try:
+            print(f"🖼️  Using OCR to extract text from image: {filename}")
+            print(f"📁 Image path: {image_path}")
+            print(f"📏 Image file size: {os.path.getsize(image_path)} bytes")
+            
+            # Open the image
+            image = Image.open(image_path)
+            print(f"📐 Image size: {image.size[0]}x{image.size[1]} pixels")
+            
+            # Extract text using OCR
+            print(f"🔄 Running OCR on image...")
+            extracted_text = pytesseract.image_to_string(image)
+            extracted_text = extracted_text.strip()
+            
+            print(f"🎉 OCR extraction complete: {len(extracted_text)} characters")
+            
+            if extracted_text:
+                return {
+                    "success": True,
+                    "message": f"Successfully extracted text from image {filename}",
+                    "data": extracted_text,
+                    "error": None,
+                    "method_used": "ocr_image"
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": f"No text found in image {filename}",
+                    "error": "NO_TEXT_FOUND",
+                    "data": None,
+                    "method_used": "ocr_image"
+                }
+                
+        except Exception as e:
+            print(f"❌ Image OCR extraction failed: {str(e)}")
+            import traceback
+            print(f"❌ Full traceback:\n{traceback.format_exc()}")
+            return {
+                "success": False,
+                "message": f"OCR extraction failed for image {filename}",
+                "error": str(e),
+                "data": None,
+                "method_used": "ocr_image"
             }
     
     def _extract_text_directly(self, pdf_path: str, filename: str) -> Dict[str, Any]:

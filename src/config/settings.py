@@ -29,7 +29,15 @@ class Settings:
     
     # File Upload Configuration
     MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB max file size
-    ALLOWED_FILE_TYPES: List[str] = ["application/pdf"]
+    ALLOWED_FILE_TYPES: List[str] = [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/jpg",
+        "image/tiff",
+        "image/bmp",
+        "image/webp"
+    ]
     
     # API Metadata
     API_TITLE: str = "Enston AI"
